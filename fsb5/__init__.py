@@ -70,6 +70,8 @@ Sample = namedtuple("Sample", [
 
 	"metadata",
 
+	"dataEnd",
+
 	"data"
 ])
 
@@ -110,8 +112,8 @@ def bits(val, start, len):
 
 
 class FSB5:
-	def __init__(self, data):
-		buf = BinaryReader(BytesIO(data), endian="<")
+	def __init__(self, stream, prefix=''):
+		buf = BinaryReader(stream, endian="<")
 
 		magic = buf.read(4)
 		if magic != b"FSB5":
@@ -178,15 +180,16 @@ class FSB5:
 				dataOffset=dataOffset,
 				samples=samples,
 				metadata=chunks,
+				dataEnd=None,
 				data=None
 			))
 
 		if self.header.nameTableSize:
 			nametable_start = buf.tell()
 
-			samplename_offsets = []
-			for i in range(self.header.numSamples):
-				samplename_offsets.append(buf.read_type("I"))
+			samplename_offsets = [buf.read_type("I") for _ in range(self.header.numSamples)]
+
+			self.sampleIndex = {}
 
 			for i in range(self.header.numSamples):
 				buf.seek(nametable_start + samplename_offsets[i])
@@ -199,11 +202,25 @@ class FSB5:
 			data_end   = data_start + self.header.dataSize
 			if i < self.header.numSamples-1:
 				data_end = self.samples[i+1].dataOffset
-			self.samples[i] = self.samples[i]._replace(data=buf.read(data_end - data_start))
+			self.samples[i] = self.samples[i]._replace(dataEnd=data_end)
 
-	def rebuild_sample(self, sample):
-		if sample not in self.samples:
-			raise ValueError("Sample to decode did not originate from the FSB archive decoding it")
+		self.sampleIndex = {}
+		for s in self.samples:
+			if not prefix or s.name.startswith(prefix):
+				self.sampleIndex[s.name[len(prefix):]] = s
+		self.buf = buf
+
+	def __getitem__(self, name):
+		sample = self.sampleIndex[name]
+		return self._rebuild_sample(sample)
+
+	def __contains__(self, name):
+		return name in self.sampleIndex
+
+	def _rebuild_sample(self, sample):
+		base = self.header.size + self.header.sampleHeadersSize + self.header.nameTableSize
+		self.buf.seek(base + sample.dataOffset)
+		sample = sample._replace(data=self.buf.read(sample.dataEnd - sample.dataOffset))
 		if self.header.mode == SoundFormat.MPEG:
 			return sample.data
 		elif self.header.mode == SoundFormat.VORBIS:
