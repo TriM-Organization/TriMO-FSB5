@@ -211,11 +211,14 @@ class FSB5:
 			from .vorbis import rebuild
 			return rebuild(sample)
 		elif self.header.mode.is_pcm:
-			from .pcm import rebuild
+			from .pcm import rebuild, rebuild_float
 			if self.header.mode == SoundFormat.PCM8:
 				width = 1
 			elif self.header.mode == SoundFormat.PCM16:
 				width = 2
+			elif self.header.mode == SoundFormat.PCMFLOAT:
+				width = 4
+				return rebuild_float(sample, width)
 			else:
 				width = 4
 			return rebuild(sample, width)
