@@ -40,7 +40,7 @@ class SoundFormat(IntEnum):
 
 	@property
 	def is_pcm(self):
-		return self in (SoundFormat.PCM8, SoundFormat.PCM16, SoundFormat.PCM32)
+		return self in (SoundFormat.PCM8, SoundFormat.PCM16, SoundFormat.PCM32, SoundFormat.PCMFLOAT)
 
 
 FSB5Header = namedtuple("FSB5Header", [
