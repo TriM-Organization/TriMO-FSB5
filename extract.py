@@ -35,6 +35,16 @@ class FSBExtractor:
 
 	def error(self, *args):
 		print(*args, file=sys.stderr)
+		
+	def find_valid_path(self,path):
+                if(os.path.exists(path)):
+                        FileName, ExtensionName  = os.path.splitext(path)
+                        i = 0
+                        while(os.path.exists(FileName + "_" + str(i) + ExtensionName)):
+                                i+=1
+                        return os.path.join(FileName + "_" + str(i) + ExtensionName)
+                else:
+                        return path
 
 	def write_to_file(self, filename_prefix, filename, extension, contents):
 		directory = self.args.output_directory
@@ -46,6 +56,7 @@ class FSBExtractor:
 			path = os.path.join(directory, '{0}-{1}.{2}'.format(filename_prefix, filename, extension))
 		else:
 			path = os.path.join(directory, '{0}.{1}'.format(filename, extension))
+		path = self.find_valid_path(path) # rename to avoid overwriting files with same filename
 
 		with open(path, 'wb') as f:
 			written = f.write(contents)
