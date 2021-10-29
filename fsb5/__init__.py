@@ -4,7 +4,6 @@ from io import BytesIO
 
 from .utils import BinaryReader
 
-
 __version__ = "1.0"
 __author__ = "Simon Pinfold"
 __email__ = "simon@uint8.me"
@@ -36,6 +35,8 @@ class SoundFormat(IntEnum):
 			return "ogg"
 		elif self.is_pcm:
 			return "wav"
+		elif self.IMAADPCM:
+			return "acm"
 		return "bin"
 
 	@property
@@ -85,6 +86,7 @@ frequency_values = {
 	9: 48000
 }
 
+
 class MetadataChunkType(IntEnum):
 	CHANNELS = 1
 	FREQUENCY = 2
@@ -94,8 +96,9 @@ class MetadataChunkType(IntEnum):
 	XWMADATA = 10
 	VORBISDATA = 11
 
+
 chunk_data_format = {
-	MetadataChunkType.CHANNELS : "B",
+	MetadataChunkType.CHANNELS: "B",
 	MetadataChunkType.FREQUENCY: "I",
 	MetadataChunkType.LOOP: "II"
 }
@@ -105,7 +108,7 @@ VorbisData = namedtuple("VorbisData", ["crc32", "unknown"])
 
 def bits(val, start, len):
 	stop = start + len
-	r = val & ((1<<stop)-1)
+	r = val & ((1 << stop) - 1)
 	return r >> start
 
 
@@ -128,18 +131,18 @@ class FSB5:
 		self.samples = []
 		for i in range(self.header.numSamples):
 			raw = buf.read_type("Q")
-			next_chunk  = bits(raw, 0,        1)
-			frequency   = bits(raw, 1,        4)
-			channels    = bits(raw, 1+4,      1)  + 1
-			dataOffset 	= bits(raw, 1+4+1,    28) * 16
-			samples     = bits(raw, 1+4+1+28, 30)
+			next_chunk = bits(raw, 0, 1)
+			frequency = bits(raw, 1, 4)
+			channels = bits(raw, 1 + 4, 1) + 1
+			dataOffset = bits(raw, 1 + 4 + 1, 28) * 16
+			samples = bits(raw, 1 + 4 + 1 + 28, 30)
 
 			chunks = {}
 			while next_chunk:
 				raw = buf.read_type("I")
-				next_chunk = bits(raw, 0,    1)
-				chunk_size = bits(raw, 1,    24)
-				chunk_type = bits(raw, 1+24, 7)
+				next_chunk = bits(raw, 0, 1)
+				chunk_size = bits(raw, 1, 24)
+				chunk_type = bits(raw, 1 + 24, 7)
 
 				try:
 					chunk_type = MetadataChunkType(chunk_type)
@@ -148,8 +151,8 @@ class FSB5:
 
 				if chunk_type == MetadataChunkType.VORBISDATA:
 					chunk_data = VorbisData(
-						crc32   = buf.read_type("I"),
-						unknown = buf.read(chunk_size-4)
+						crc32=buf.read_type("I"),
+						unknown=buf.read(chunk_size - 4)
 					)
 				elif chunk_type in chunk_data_format:
 					fmt = chunk_data_format[chunk_type]
@@ -196,9 +199,9 @@ class FSB5:
 		buf.seek(self.header.size + self.header.sampleHeadersSize + self.header.nameTableSize)
 		for i in range(self.header.numSamples):
 			data_start = self.samples[i].dataOffset
-			data_end   = data_start + self.header.dataSize
-			if i < self.header.numSamples-1:
-				data_end = self.samples[i+1].dataOffset
+			data_end = data_start + self.header.dataSize
+			if i < self.header.numSamples - 1:
+				data_end = self.samples[i + 1].dataOffset
 			self.samples[i] = self.samples[i]._replace(data=buf.read(data_end - data_start))
 
 	def rebuild_sample(self, sample):
@@ -222,8 +225,13 @@ class FSB5:
 			else:
 				width = 4
 			return rebuild(sample, width)
+		elif self.header.mode == SoundFormat.IMAADPCM:
+			from .ima import rebuild
+			return rebuild(sample)
+		else:
+			return sample.data
 
-		raise NotImplementedError("Decoding samples of type %s is not supported" % (self.header.mode))
+	# raise NotImplementedError("Decoding samples of type %s is not supported" % (self.header.mode))
 
 	def get_sample_extension(self):
 		return self.header.mode.file_extension

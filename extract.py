@@ -15,14 +15,14 @@ class FSBExtractor:
 	def init_parser(self):
 		parser = argparse.ArgumentParser(description=self.description)
 		parser.add_argument('fsb_file', nargs='*', type=str,
-			help='FSB5 container to extract audio from (defaults to stdin)'
-		)
+							help='FSB5 container to extract audio from (defaults to stdin)'
+							)
 		parser.add_argument('-o', '--output-directory', default='out/',
-			help='output directory to write extracted samples into'
-		)
+							help='output directory to write extracted samples into'
+							)
 		parser.add_argument('--verbose', action='store_true',
-			help='be more verbose during extraction'
-		)
+							help='be more verbose during extraction'
+							)
 
 		return parser
 
@@ -35,16 +35,16 @@ class FSBExtractor:
 
 	def error(self, *args):
 		print(*args, file=sys.stderr)
-		
-	def find_valid_path(self,path):
-                if(os.path.exists(path)):
-                        FileName, ExtensionName  = os.path.splitext(path)
-                        i = 0
-                        while(os.path.exists(FileName + "_" + str(i) + ExtensionName)):
-                                i+=1
-                        return os.path.join(FileName + "_" + str(i) + ExtensionName)
-                else:
-                        return path
+
+	def find_valid_path(self, path):
+		if (os.path.exists(path)):
+			FileName, ExtensionName = os.path.splitext(path)
+			i = 0
+			while (os.path.exists(FileName + "_" + str(i) + ExtensionName)):
+				i += 1
+			return os.path.join(FileName + "_" + str(i) + ExtensionName)
+		else:
+			return path
 
 	def write_to_file(self, filename_prefix, filename, extension, contents):
 		directory = self.args.output_directory
@@ -56,7 +56,7 @@ class FSBExtractor:
 			path = os.path.join(directory, '{0}-{1}.{2}'.format(filename_prefix, filename, extension))
 		else:
 			path = os.path.join(directory, '{0}.{1}'.format(filename, extension))
-		path = self.find_valid_path(path) # rename to avoid overwriting files with same filename
+		path = self.find_valid_path(path)  # rename to avoid overwriting files with same filename
 
 		with open(path, 'wb') as f:
 			written = f.write(contents)
@@ -94,7 +94,8 @@ class FSBExtractor:
 
 			sample_fakepath = '{0}:{1}.{2}'.format(fsb_name, sample.name, ext)
 			try:
-				yield sample_fakepath, sample.name, fsb.rebuild_sample(sample)
+				yield sample_fakepath, '{0}_{1}-{2}ch-{3}smpl'.format(sample.name, sample.frequency, sample.channels,
+																	  sample.samples), fsb.rebuild_sample(sample)
 			except ValueError as e:
 				self.error('FAILED to extract %r: %s' % (sample_fakepath, e))
 
@@ -106,6 +107,7 @@ class FSBExtractor:
 
 		is_resource = False
 		index = 0
+		data = data[data.index(b'FSB5'):]
 		while data:
 			fsb, ext = self.load_fsb(data)
 
@@ -132,6 +134,7 @@ class FSBExtractor:
 				self.handle_file(f)
 
 		return 0
+
 
 def main():
 	app = FSBExtractor()
