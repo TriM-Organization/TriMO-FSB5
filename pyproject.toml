@@ -1,0 +1,64 @@
+[project]
+    name            = "TriMO-FSB5"
+    dynamic         = ["version"]
+    requires-python = ">=3.6"
+    dependencies    = []
+
+    authors = [
+        { name = "Simon Pinfold", email = "simon@uint8.me" },
+        { name = "睿乐组织 TriMO", email = "TriM-Organization@hotmail.com" },
+    ]
+    maintainers = [
+        { name = "金羿Eilles", email = "EillesWan@outlook.com" },
+    ]
+
+
+    description = "适用于 Python 的 FSB5 文件解析库及工具集。\nLibrary and to extract audio from FSB5 (FMOD Sample Bank) files"
+    readme      = "README.md"
+    license     = { file = "LICENSE.md" }
+
+    keywords = [
+        "fsb5",
+        "fmod",
+        "audio",
+    ]
+
+    CLASSIFIERS = [
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "Natural Language :: Chinese (Simplified)",
+        "Operating System :: OS Independent",
+        "Topic :: Software Development :: Libraries",
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Topic :: Multimedia :: Sound/Audio",
+        "Topic :: Multimedia :: Sound/Audio :: Conversion",
+    ]
+
+[build-system]
+    requires      = ["pdm-backend"]
+    build-backend = "pdm.backend"
+
+[tool.pdm.build]
+    source-includes = [
+        "README.EN.MD",
+        "README.MD",
+        "LICENSE.MD",
+    ]
+    excludes = [
+        "scripts/",
+        "dev_tools/",
+    ]
+
+
+[tool.pdm.version]
+    source = "file"
+    path   = "fsb5/__init__.py"
+
+
+[tool.pyright]
+    typeCheckingMode = "standard"

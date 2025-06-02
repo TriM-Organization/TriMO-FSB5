@@ -43,63 +43,65 @@
 
 
 def rebuild(sample):
-	block_size = 72
-	# block_size = 256 * sample.channels
-	# if sample.frequency >= 11000:
-	# 	block_size *= sample.frequency // 11000
-	# samples_per_block = 505 																		# default factor
-	# samples_per_block = (block_size - sample.channels * 4) * (sample.channels ^ 3) + 1			# Intel ADCPM factor
-	# samples_per_block = (((block_size - (7 * sample.channels)) * 8) / (4 * sample.channels)) + 2	# MS ADCPM factor
-	samples_per_block = (sample.samples // block_size + sample.samples % block_size) // sample.channels
-	ret = bytearray()
-	# ChunkID
-	ret.extend(b"RIFF")
-	# ChunkSize
-	ret.extend(le(52 + len(sample.data), False))
-	# Format
-	ret.extend(b"WAVE")
-	# Subchunk1ID
-	ret.extend(b"fmt ")
-	# Subchunk1Size
-	ret.extend(le(20, False))
-	# AudioFormat
-	ret.extend(le(0x11, True))
-	# NumChannels
-	ret.extend(le(sample.channels, True))
-	# SampleRate
-	ret.extend(le(sample.frequency, False))
-	# ByteRate <<
-	# ret.extend(le((sample.frequency * block_size) // samples_per_block, False))
-	ret.extend(le((sample.frequency * 10) // (sample.channels * 4), False))
-	# BlockAlign <<
-	ret.extend(le(block_size, True))
-	# BitsPerSample
-	ret.extend(le(4, True))
-	# ByteExtraData
-	ret.extend(le(2, True))
-	# SamplesPerBlock <<
-	ret.extend(le(samples_per_block, True))
-	# FactHDR
-	ret.extend(b"fact")
-	# SubChunk2Size
-	ret.extend(le(4, False))
-	# TotalSamples
-	ret.extend(le(sample.samples, False))
-	# Subchunk3ID
-	ret.extend(b"data")
-	# Subchunk3Size
-	ret.extend(le(len(sample.data), False))
+    block_size = 72
+    # block_size = 256 * sample.channels
+    # if sample.frequency >= 11000:
+    # 	block_size *= sample.frequency // 11000
+    # samples_per_block = 505 																		# default factor
+    # samples_per_block = (block_size - sample.channels * 4) * (sample.channels ^ 3) + 1			# Intel ADCPM factor
+    # samples_per_block = (((block_size - (7 * sample.channels)) * 8) / (4 * sample.channels)) + 2	# MS ADCPM factor
+    samples_per_block = (
+        sample.samples // block_size + sample.samples % block_size
+    ) // sample.channels
+    ret = bytearray()
+    # ChunkID
+    ret.extend(b"RIFF")
+    # ChunkSize
+    ret.extend(le(52 + len(sample.data), False))
+    # Format
+    ret.extend(b"WAVE")
+    # Subchunk1ID
+    ret.extend(b"fmt ")
+    # Subchunk1Size
+    ret.extend(le(20, False))
+    # AudioFormat
+    ret.extend(le(0x11, True))
+    # NumChannels
+    ret.extend(le(sample.channels, True))
+    # SampleRate
+    ret.extend(le(sample.frequency, False))
+    # ByteRate <<
+    # ret.extend(le((sample.frequency * block_size) // samples_per_block, False))
+    ret.extend(le((sample.frequency * 10) // (sample.channels * 4), False))
+    # BlockAlign <<
+    ret.extend(le(block_size, True))
+    # BitsPerSample
+    ret.extend(le(4, True))
+    # ByteExtraData
+    ret.extend(le(2, True))
+    # SamplesPerBlock <<
+    ret.extend(le(samples_per_block, True))
+    # FactHDR
+    ret.extend(b"fact")
+    # SubChunk2Size
+    ret.extend(le(4, False))
+    # TotalSamples
+    ret.extend(le(sample.samples, False))
+    # Subchunk3ID
+    ret.extend(b"data")
+    # Subchunk3Size
+    ret.extend(le(len(sample.data), False))
 
-	ret.extend(sample.data)
+    ret.extend(sample.data)
 
-	return ret
+    return ret
 
 
 def le(v: int, short: bool) -> bytearray:
-	out = bytearray()
-	out.append(v & 0xFF)
-	out.append((v >> 8) & 0xFF)
-	if not short:
-		out.append((v >> 16) & 0xFF)
-		out.append((v >> 24) & 0xFF)
-	return out
+    out = bytearray()
+    out.append(v & 0xFF)
+    out.append((v >> 8) & 0xFF)
+    if not short:
+        out.append((v >> 16) & 0xFF)
+        out.append((v >> 24) & 0xFF)
+    return out
