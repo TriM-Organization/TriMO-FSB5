@@ -291,7 +291,7 @@ class FSB5:
 
             return rebuild(sample)
         elif self.header.mode.is_pcm:
-            from .pcm import rebuild, rebuild_float
+            from .pcm import rebuild, rebuild_float, rebuild_fadpcm
 
             if self.header.mode == SoundFormat.PCM8:
                 width = 1
@@ -300,6 +300,9 @@ class FSB5:
             elif self.header.mode == SoundFormat.PCMFLOAT:
                 width = 4
                 return rebuild_float(sample, width)
+            elif self.header.mode == SoundFormat.FADPCM:
+                width = 2
+                return rebuild_fadpcm(sample, width)
             else:
                 width = 4
             return rebuild(sample, width)
