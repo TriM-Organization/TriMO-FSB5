@@ -21,8 +21,95 @@ def rebuild_float(sample, width):
     return ret.getvalue()
 
 
+fadpcm_coefs = (
+    (0, 0),
+    (60, 0),
+    (122, 60),
+    (
+        115,
+        52,
+    ),
+    (98, 55),
+    (0, 0),
+    (0, 0),
+    (0, 0),
+)
 
 
+def clamp(value, min_value, max_value):
+    return max(min(value, max_value), min_value)
+
+
+def rebuild_pcm_data(sample_bytes):
+    # header_length = 0xc
+    # bytes_per_frame = 0x8c
+    # samples_per_frame = (bytes_per_frame - header_length) * 2  # 256
+
+    # num_frames = len(sample_bytes) // bytes_per_frame
+
+    end_pos = len(sample_bytes) * 256 // 140
+
+    pcm_data = b""
+
+    stream = BytesIO(sample_bytes)
+
+    out_pos = 0
+    while out_pos < end_pos:
+        # Read header
+        coefs_bytes = stream.read(4)
+        shifts_bytes = stream.read(4)
+        hist1 = int.from_bytes(stream.read(2), "little", signed=True)
+        hist2 = int.from_bytes(stream.read(2), "little", signed=True)
+
+        coefs = int.from_bytes(coefs_bytes, "little")
+        shifts = int.from_bytes(shifts_bytes, "little")
+
+        for i in range(8):
+            index = ((coefs >> i * 4) & 0x0F) % 7
+            shift = (shifts >> i * 4) & 0x0F
+            coef1 = fadpcm_coefs[index][0]
+            coef2 = fadpcm_coefs[index][1]
+
+            shift = 22 - shift
+
+            for j in range(4):
+                nibbles_bytes = stream.read(4)
+                if len(nibbles_bytes) < 4:
+                    raise ValueError("Unexpected end of data in nibbles read")
+                nibbles = int.from_bytes(nibbles_bytes, "little")
+
+                for k in range(8):
+                    sample = (nibbles >> (k * 4)) & 0x0F
+                    sample = (sample << 28) >> shift
+                    sample = (sample - hist2 * coef2 + hist1 * coef1) >> 6
+                    sample = clamp(sample, -32768, 32767)
+
+                    pcm_data += sample.to_bytes(2, "little", signed=True)
+                    out_pos += 1
+
+                    hist2 = hist1
+                    hist1 = sample
+
+    return pcm_data
+
+
+def rebuild_fadpcm(sample, width):
+
+    data = sample.data[: sample.samples * sample.channels * width]
+
+    pcm_shorts = rebuild_pcm_data(data)
+
+    ret = BytesIO()
+
+    with wave.open(ret, "wb") as wav_file:
+        wav_file.setparams(
+            (sample.channels, width, sample.frequency, 0, "NONE", "NONE")
+        )
+
+        # 写入 PCM 数据
+        wav_file.writeframes(pcm_shorts)
+
+    return ret.getvalue()
 
 
 WAVE_FORMAT_IEEE_FLOAT = 3
@@ -30,6 +117,7 @@ WAVE_FORMAT_IEEE_FLOAT = 3
 
 # 类型检查器会在下面这个类里报一堆 _file、_nchannels、_sampwidth 未定义的错误，但是不影响使用
 # type checker might report errors here below, but it doesn't affect usage
+
 
 class PCMFloatWave_write(wave.Wave_write):
     def _write_header(self, initlength):
