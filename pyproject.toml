@@ -13,8 +13,8 @@
     ]
 
 
-    description = "适用于 Python 的 FSB5 文件解析库及工具集。\nLibrary and to extract audio from FSB5 (FMOD Sample Bank) files"
-    readme      = "README.md"
+    description = "适用于 Python 的 FSB5 文件解析库及工具集。| Library and to extract audio from FSB5 (FMOD Sample Bank) files"
+    readme      = { file = "README.EN.md", content-type = "text/markdown" }
     license     = { file = "LICENSE.md" }
 
     keywords = [
@@ -45,9 +45,9 @@
 
 [tool.pdm.build]
     source-includes = [
-        "README.EN.MD",
-        "README.MD",
-        "LICENSE.MD",
+        "README.EN.md",
+        "README.md",
+        "LICENSE.md",
     ]
     excludes = [
         "scripts/",
@@ -62,3 +62,8 @@
 
 [tool.pyright]
     typeCheckingMode = "standard"
+
+[dependency-groups]
+    dev = [
+        "twine>=3.8.0",
+    ]

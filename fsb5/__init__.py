@@ -150,13 +150,14 @@ class FSB5:
 
         chunk = 10240000
         fpos = 0
+        offset = 0
         while True:
             ff = buf.read(chunk)
+            if not ff:
+                break
             offset = ff.find(b"FSB5")
             if offset > 0:
                 offset += fpos
-                break
-            if not ff:
                 break
             fpos += chunk
 

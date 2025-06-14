@@ -8,7 +8,7 @@ Python library and tool to extract FSB5 (FMOD Sample Bank) files.
 
 * [x] MPEG 格式
 * [x] Vorbis (OGG)
-* [x] 波形格式（PCM8, PCM16, PCM32, PCMFLOAT）
+* [x] 波形格式（PCM8, PCM16, PCM32, PCMFLOAT, FADPCM）
 
 若存在其他格式，也许能解析，但会以 `.dat` 的文件后缀析出，且有可能因缺失文件标头而无法播放。
 
@@ -104,7 +104,7 @@ for sample in fsb.samples:
 | AT9 | `fsb5.SoundFormat.AT9` | ❌ | | PlayStation 音频的原生格式，其中也包括 Unity 游戏 | 
 | XWMA | `fsb5.SoundFormat.XWMA` | ❌ | | 未见使用此编码者 |
 | VORBIS | `fsb5.SoundFormat.VORBIS` | ✔️ | ogg | 在 Unity 游戏里使用极为频繁 |
-| FADPCM | `fsb5.SoundFormat.FADPCM` | ❗ | wav | Minecraft 基岩版的大量音效使用此种格式 |
+| FADPCM | `fsb5.SoundFormat.FADPCM` | ✔️ | wav | Minecraft 基岩版的大量音效使用此种格式 |
 
 #### Useful sample properties
 
@@ -135,5 +135,8 @@ To reconstruct a playable version of the audio use `rebuild_sample` on the FSB5 
 
 ## License
 
-python-fsb5 is licensed under the terms of the MIT license.
-The full text of the license is available in the LICENSE file.
+This software is a fork of the original python-fsb5 library by Simon Pinfold.  
+And this fork is now licensed under the terms of the Apache 2.0 License.  
+Original python-fsb5 is licensed under the terms of the MIT license.  
+
+The full text of the license is available in the [LICENSE.md](./LICENSE.md) file.  

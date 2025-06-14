@@ -25,10 +25,7 @@ fadpcm_coefs = (
     (0, 0),
     (60, 0),
     (122, 60),
-    (
-        115,
-        52,
-    ),
+    (115, 52),
     (98, 55),
     (0, 0),
     (0, 0),
@@ -38,6 +35,14 @@ fadpcm_coefs = (
 
 def clamp(value, min_value, max_value):
     return max(min(value, max_value), min_value)
+
+
+def overflow(value, min_value, max_value):
+    if min_value < value < max_value:
+        return value
+    else:
+        return (value - min_value) % (2 * (max_value + 1)) + min_value
+    # return (value - max_value + min_value) if value > max_value else ((value + max_value - min_value) if value < min_value else value)
 
 
 def rebuild_pcm_data(sample_bytes):
@@ -65,7 +70,7 @@ def rebuild_pcm_data(sample_bytes):
         shifts = int.from_bytes(shifts_bytes, "little")
 
         for i in range(8):
-            index = ((coefs >> i * 4) & 0x0F) % 7
+            index = ((coefs >> i * 4) & 0x0F) % 0x07
             shift = (shifts >> i * 4) & 0x0F
             coef1 = fadpcm_coefs[index][0]
             coef2 = fadpcm_coefs[index][1]
@@ -76,12 +81,32 @@ def rebuild_pcm_data(sample_bytes):
                 nibbles_bytes = stream.read(4)
                 if len(nibbles_bytes) < 4:
                     raise ValueError("Unexpected end of data in nibbles read")
-                nibbles = int.from_bytes(nibbles_bytes, "little")
+                nibbles = overflow(
+                    int.from_bytes(nibbles_bytes, "little"), 0, 0xFFFFFFFF
+                )
 
                 for k in range(8):
-                    sample = (nibbles >> (k * 4)) & 0x0F
-                    sample = (sample << 28) >> shift
-                    sample = (sample - hist2 * coef2 + hist1 * coef1) >> 6
+                    sample = overflow(
+                        overflow(nibbles >> (k * 4), -2147483648, 2147483647) & 0x0F,
+                        -2147483648,
+                        2147483647,
+                    )
+                    sample = overflow(
+                        overflow(sample << 28, -2147483648, 2147483647) >> shift,
+                        -2147483648,
+                        2147483647,
+                    )
+                    sample = overflow(
+                        overflow(
+                            overflow(sample - hist2 * coef2, -2147483648, 2147483647)
+                            + hist1 * coef1,
+                            -2147483648,
+                            2147483647,
+                        )
+                        >> 6,
+                        -2147483648,
+                        2147483647,
+                    )
                     sample = clamp(sample, -32768, 32767)
 
                     pcm_data += sample.to_bytes(2, "little", signed=True)
@@ -107,6 +132,7 @@ def rebuild_fadpcm(sample, width):
         )
 
         # 写入 PCM 数据
+        # wav_file.writeframesraw(pcm_shorts)
         wav_file.writeframes(pcm_shorts)
 
     return ret.getvalue()
