@@ -23,7 +23,7 @@
         "audio",
     ]
 
-    CLASSIFIERS = [
+    classifiers = [
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Natural Language :: Chinese (Simplified)",

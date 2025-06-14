@@ -29,6 +29,7 @@ WAVE_FORMAT_IEEE_FLOAT = 3
 
 
 # 类型检查器会在下面这个类里报一堆 _file、_nchannels、_sampwidth 未定义的错误，但是不影响使用
+# type checker might report errors here below, but it doesn't affect usage
 
 class PCMFloatWave_write(wave.Wave_write):
     def _write_header(self, initlength):
