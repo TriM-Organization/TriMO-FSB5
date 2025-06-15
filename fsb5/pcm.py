@@ -79,8 +79,9 @@ def rebuild_pcm_data(sample_bytes):
 
             for j in range(4):
                 nibbles_bytes = stream.read(4)
-                if len(nibbles_bytes) < 4:
-                    raise ValueError("Unexpected end of data in nibbles read")
+                # 有必要么？Is this below necessary?
+                # if len(nibbles_bytes) < 4:
+                #     raise ValueError("Unexpected end of data in nibbles read")
                 nibbles = overflow(
                     int.from_bytes(nibbles_bytes, "little"), 0, 0xFFFFFFFF
                 )
